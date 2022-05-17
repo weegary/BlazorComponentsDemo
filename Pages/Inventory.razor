@@ -1,0 +1,125 @@
+﻿@page "/Inventory"
+
+<h3>Inventory</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>名稱</th>
+            <th>市價/均價</th>
+            <th>股數</th>
+            <th>損益</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var inventory in inventoryList)
+        {
+            <tr>
+                <td rowspan=2>@inventory.StockName<br />@inventory.StockID</td>
+                <td>@inventory.MarketPrice</td>
+                <td rowspan=2>@inventory.BuyVolume</td>
+                <td>Profit.</td>
+                <td rowspan=2>@inventory.BrokerName</td>
+            </tr>
+            <tr>
+                
+                <td>@inventory.BuyPrice</td>
+                
+                <td>Percentage</td>
+            </tr>
+        }
+    </tbody>
+
+</table>
+<p></p>
+
+@code {
+    protected override void OnInitialized() // = On Page Load
+    {   
+        AddCurrentInventory();
+        GetPriceForInventoryList();
+    }
+
+    private List<InventoryModel> inventoryList = new List<InventoryModel>();
+
+    //private InventoryModel newInventory = new InventoryModel();
+
+    private void AddInventory()
+    {
+
+
+
+    }
+
+    private void AddCurrentInventory()
+    {
+        InventoryModel newInventory = new InventoryModel();
+        newInventory.StockID = "00757";
+        newInventory.StockName = "統一FANG+";
+        newInventory.BuyDate = new DateTime(2022, 1, 13);
+        newInventory.BuyVolume = 500;
+        newInventory.BuyPrice = 42.89;
+        newInventory.BrokerName = "元大";
+        newInventory.Type = "上市";
+        inventoryList.Add(newInventory);
+
+        InventoryModel newInventory2 = new InventoryModel();
+        newInventory2.StockID = "2442";
+        newInventory2.StockName = "新美齊";
+        newInventory2.BuyDate = new DateTime(2022, 1, 13);
+        newInventory2.BuyVolume = 1000;
+        newInventory2.BuyPrice = 14.07;
+        newInventory2.BrokerName = "元大";
+        newInventory2.Type = "上市";
+        inventoryList.Add(newInventory2);
+
+        InventoryModel newInventory3 = new InventoryModel();
+        newInventory3.StockID = "2610";
+        newInventory3.StockName = "華航";
+        newInventory3.BuyDate = new DateTime(2022, 1, 13);
+        newInventory3.BuyVolume = 4000;
+        newInventory3.BuyPrice = 26.77;
+        newInventory3.BrokerName = "元大";
+        newInventory3.Type = "上市";
+        inventoryList.Add(newInventory3);
+
+        InventoryModel newInventory4 = new InventoryModel();
+        newInventory4.StockID = "3624";
+        newInventory4.StockName = "光頡";
+        newInventory4.BuyDate = new DateTime(2022, 1, 13);
+        newInventory4.BuyVolume = 100;
+        newInventory4.BuyPrice = 90;
+        newInventory4.BrokerName = "玉山";
+        newInventory4.Type = "上櫃";
+        inventoryList.Add(newInventory4);
+    }
+
+    private void GetPriceForInventoryList()
+    {
+        string url = @"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=";
+        foreach (InventoryModel inventory in inventoryList)
+        {
+            if (inventory.Type == "上市")
+                url += "tse_";
+            else
+                url += "otc_";
+            url += inventory.StockID + ".tw" + "|";
+        }
+        url = url.Substring(0, url.Length - 1);
+        url += "&json=1&delay=0";
+        WebRequest request = WebRequest.Create(url);
+        WebResponse response = request.GetResponse();
+        Stream dataStream = response.GetResponseStream ();
+        StreamReader reader = new StreamReader (dataStream);
+        string responseFromServer = reader.ReadToEnd ();
+        JsonObject jobj = (JsonObject)JsonNode.Parse(responseFromServer);
+        JsonArray node = (JsonArray)jobj["msgArray"];
+        for (int i = 0; i < inventoryList.Count; i++)
+        {
+            JsonObject msg = (JsonObject)node[i];
+            var a = msg["z"]; 
+            inventoryList[i].MarketPrice = Convert.ToDouble(msg["z"].ToString().Replace("\"",""));
+         }
+
+    }
+
+}
